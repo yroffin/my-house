@@ -6,6 +6,7 @@ import { Tree } from 'primeng/tree';
 import { ComponentModel, PaperModel, PaperRectangleModel } from 'src/app/models/paper.class';
 import { DatabaseService } from 'src/app/services/database.service';
 import * as THREE from 'three';
+import { CameraHelper } from 'three';
 import { OrbitControls } from 'three-orbitcontrols-ts';
 import { PaperComponent } from '../paper/paper.component';
 
@@ -21,17 +22,26 @@ export class ThreejsComponent implements OnInit, AfterViewInit, OnDestroy {
     private route: ActivatedRoute
   ) { }
 
-  @ViewChild('canvas')
-  private canvasRef?: ElementRef;
+  @ViewChild('canvasDefault')
+  private canvasDefaultRef?: ElementRef;
 
-  private get canvas(): HTMLCanvasElement {
-    return this.canvasRef?.nativeElement;
+  private get canvasDefault(): HTMLCanvasElement {
+    return this.canvasDefaultRef?.nativeElement;
   }
 
-  private renderer!: THREE.WebGLRenderer;
+  @ViewChild('canvasHelper')
+  private canvasHelperref?: ElementRef;
+
+  private get canvasHelper(): HTMLCanvasElement {
+    return this.canvasHelperref?.nativeElement;
+  }
+
+  private rendererDefault!: THREE.WebGLRenderer;
+  private rendererHelper!: THREE.WebGLRenderer;
 
   private scene: THREE.Scene = new THREE.Scene();
-  private camera!: THREE.PerspectiveCamera;
+  private cameraPerpective!: THREE.PerspectiveCamera;
+  private cameraHelper!: THREE.PerspectiveCamera;
   private group = new THREE.Group();
 
   subscriptions: any = [];
@@ -72,8 +82,18 @@ export class ThreejsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.scene.add(this.group)
 
     // camera
-    this.camera = new THREE.PerspectiveCamera(50, this.getAspectRatio(), 0.1, 2000);
-    this.camera.position.set(0, 1500, 50);
+    this.cameraPerpective = new THREE.PerspectiveCamera(50, this.getAspectRatioDefault(), 1, 200000);
+    this.cameraPerpective.position.x = 800;
+    this.cameraPerpective.position.y = 5500;
+    this.cameraPerpective.position.z = 800;
+    this.cameraPerpective.lookAt(new THREE.Vector3(0, 0, 0))
+    this.scene.add(new CameraHelper(this.cameraPerpective));
+
+    this.cameraHelper = new THREE.PerspectiveCamera(50, this.getAspectRatioHelper(), 0.1, 200000);
+    this.cameraHelper.position.x = 9800;
+    this.cameraHelper.position.y = 2800;
+    this.cameraHelper.position.z = 9800;
+    this.cameraHelper.lookAt(new THREE.Vector3(0, 0, 0))
 
     // Object
     let material = new THREE.MeshPhongMaterial({
@@ -130,8 +150,12 @@ export class ThreejsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.scene.add(dirLight.shadow.camera);
   }
 
-  private getAspectRatio() {
-    return this.canvas.clientWidth / this.canvas.clientHeight;
+  private getAspectRatioDefault() {
+    return this.canvasDefault.clientWidth / this.canvasDefault.clientHeight;
+  }
+
+  private getAspectRatioHelper() {
+    return this.canvasHelper.clientWidth / this.canvasHelper.clientHeight;
   }
 
   private loadScene() {
@@ -172,9 +196,9 @@ export class ThreejsComponent implements OnInit, AfterViewInit, OnDestroy {
   private factoryRectagnlePaper(paper: PaperRectangleModel): THREE.ExtrudeGeometry {
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
-    shape.lineTo(0, paper.width);
-    shape.lineTo(paper.length, paper.width);
-    shape.lineTo(paper.length, 0);
+    shape.lineTo(0, paper.length);
+    shape.lineTo(paper.width, paper.length);
+    shape.lineTo(paper.width, 0);
     shape.lineTo(0, 0);
 
     const extrudeSettings = {
@@ -189,29 +213,39 @@ export class ThreejsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private startRenderingLoop() {
-    //* Renderer
-    // Use canvas element in template
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
-    this.renderer.setPixelRatio(devicePixelRatio);
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    // Renderer
+    this.rendererDefault = new THREE.WebGLRenderer({ canvas: this.canvasDefault });
+    this.rendererDefault.setPixelRatio(devicePixelRatio);
+    this.rendererDefault.setSize(this.canvasDefault.clientWidth, this.canvasDefault.clientHeight);
 
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.BasicShadowMap;
+    this.rendererDefault.shadowMap.enabled = true;
+    this.rendererDefault.shadowMap.type = THREE.BasicShadowMap;
+    this.rendererDefault.outputEncoding = THREE.sRGBEncoding;
+
+    // Renderer
+    this.rendererHelper = new THREE.WebGLRenderer({ canvas: this.canvasHelper });
+    this.rendererHelper.setPixelRatio(devicePixelRatio);
+    this.rendererHelper.setSize(this.canvasHelper.clientWidth, this.canvasHelper.clientHeight);
+
+    this.rendererHelper.shadowMap.enabled = true;
+    this.rendererHelper.shadowMap.type = THREE.BasicShadowMap;
+    this.rendererHelper.outputEncoding = THREE.sRGBEncoding;
 
     let component: ThreejsComponent = this;
-    const controls = new OrbitControls(this.camera, this.renderer.domElement);
-    controls.autoRotate = true;
+    const controls = new OrbitControls(this.cameraPerpective, this.rendererDefault.domElement);
+    controls.minDistance = 0;
+    controls.maxDistance = 200000;
+    controls.autoRotate = false;
     controls.enableZoom = true;
-    controls.enablePan = false;
-    controls.minDistance = 20;
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.2;
-    controls.enableKeys = true;
+    controls.enablePan = true;
+    controls.enableKeys = false;
+    controls.target.set(0, 0, 0);
     controls.update();
 
     (function render() {
       requestAnimationFrame(render);
-      component.renderer.render(component.scene, component.camera);
+      component.rendererDefault.render(component.scene, component.cameraPerpective);
+      component.rendererHelper.render(component.scene, component.cameraHelper);
     }());
   }
 }
