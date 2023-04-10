@@ -1,4 +1,5 @@
-<p-table [value]="projects" [tableStyle]="{ 'min-width': '50rem' }">
+<p-table [value]="projects" styleClass="p-datatable-gridlines p-datatable-striped p-datatable-sm"
+    [tableStyle]="{ 'min-width': '50rem' }">
     <ng-template pTemplate="header">
         <tr>
             <th>Id</th>
@@ -10,10 +11,11 @@
         <tr>
             <td>{{ project.id }}</td>
             <td>{{ project.label }}</td>
-            <td><button pButton pRipple icon="pi pi-hashtag" (click)="open(project)"></button>
+            <td><button pButton pRipple pTooltip="Open" icon="pi pi-hashtag" (click)="open(project)"
+                    class="p-button-rounded"></button>
                 &nbsp;
                 <button pButton pRipple pTooltip="Remove" icon="pi pi-trash" (click)="delete($event, project)"
-                    class="p-button-danger"></button>
+                    class="p-button-danger p-button-rounded"></button>
             </td>
         </tr>
     </ng-template>
