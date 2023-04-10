@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoggerModule, NgxLoggerLevel } from 'ngx-logger';
+import { StoreModule } from '@ngrx/store';
 
 import { AppComponent } from './app.component';
 import { ShapeComponent } from './components/shape/shape.component';
@@ -53,12 +54,19 @@ import { PanelModule } from 'primeng/panel';
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ShapesComponent } from './components/shapes/shapes.component';
+import { ProjectsComponent } from './components/projects/projects.component';
+import { ProjectComponent } from './components/project/project.component';
+import { projectReducer, projectsReducer } from './stores/projects.reducer';
+import { menuReducer } from './stores/menu.reducer';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @NgModule({
   declarations: [
     AppComponent,
     ShapeComponent,
-    ShapesComponent
+    ShapesComponent,
+    ProjectsComponent,
+    ProjectComponent
   ],
   imports: [
     BrowserModule,
@@ -96,7 +104,6 @@ import { ShapesComponent } from './components/shapes/shapes.component';
     TagModule,
     TabViewModule,
     OverlayPanelModule,
-    ConfirmPopupModule,
     TreeModule,
     TreeTableModule,
     ToastModule,
@@ -112,9 +119,15 @@ import { ShapesComponent } from './components/shapes/shapes.component';
     ToggleButtonModule,
     FieldsetModule,
     DividerModule,
-    BadgeModule
+    BadgeModule,
+    ConfirmPopupModule,
+    StoreModule.forRoot({
+      projects: projectsReducer,
+      project: projectReducer,
+      menu: menuReducer
+    })
   ],
-  providers: [],
+  providers: [ConfirmationService, MessageService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
